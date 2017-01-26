@@ -53,6 +53,8 @@ func main() {
 		line = strings.TrimSpace(line)
 		switch {
 		case strings.HasPrefix(line, "print "):
+            fmt.Println()
+
 			switch line[6:] {
 			case "chain":
                 chain.PrintChain()
@@ -71,8 +73,11 @@ func main() {
 				fmt.Println("Cant't print: ", line[6:])
 			}
 
+            fmt.Println()
+
         case line == "print":
             fmt.Println("Usage: print (chain|latest|buffer)")
+            fmt.Println()
 
         case strings.HasPrefix(line, "help"):
             fmt.Println(completer.Tree("  "))
@@ -83,15 +88,18 @@ func main() {
         case strings.HasPrefix(line, "commit "):
             data := []byte(line[7:])
             chain.Commit(data)
+            fmt.Println()
 
         case strings.HasPrefix(line, "retrieve "):
             data := chain.Retrieve(line[9:])
             fmt.Println(string(data))
             status := chain.Verify(line[9:], data)
-            fmt.Println("Status: " + blocktrain.StatusToString(status))
+            fmt.Println("Status: " + colorStatus(status))
+            fmt.Println()
 
         case line == "verify":
             fmt.Println("Usage: verify <txID> <d a t a>")
+            fmt.Println()
             continue
 
         case strings.HasPrefix(line, "verify "):
@@ -105,7 +113,8 @@ func main() {
             data := line[7+spaceIndex+1:]
 
             status := chain.Verify(txID, []byte(data))
-            fmt.Println("Status: " + blocktrain.StatusToString(status))
+            fmt.Println("Status: " + colorStatus(status))
+            fmt.Println()
         }
     }
 
@@ -113,3 +122,25 @@ exit:
     fmt.Println("The BlockTrain is leaving the station...")
 }
 
+func colorStatus(status blocktrain.VerificationStatus) string {
+    prefix := ""
+    
+    if status == blocktrain.Verified {
+        prefix = "\033[32m"
+    }
+
+    if status == blocktrain.Invalid || status == blocktrain.InBufferInvalid {
+        prefix = "\033[31m"
+    }
+
+    if status == blocktrain.InBuffer || status == blocktrain.UnknownTxID {
+        prefix = "\033[34m"
+    }
+
+    postfix := ""
+    if prefix != "" {
+        postfix = "\033[0m"
+    }
+
+    return prefix + blocktrain.StatusToString(status) + postfix
+}
